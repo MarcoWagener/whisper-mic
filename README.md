@@ -76,33 +76,67 @@ cd ~/whisper.cpp/build/bin
 
 ---
 
-## 🚀 SECTION 2: Global Automation via Apple Shortcuts
+## 🚀 SECTION 2: macOS Permissions Setup
 
-*Once the terminal test is successful, follow these steps to turn the engine into a global, one-click dictation tool that automatically types for you.*
+*These must be granted before the Shortcut will work fully. Do this once on any new machine.*
 
-### Step 1: Grant Background Microphone Permissions
+### Step 1: Grant Microphone Access
 
-Because our automation script uses `ffmpeg` in the background, you must perform a one-time "handshake" to grant Terminal explicit microphone access. Run this in your Terminal:
+Because `ffmpeg` runs in the background via Shortcuts, macOS requires explicit permission for both Terminal and Shortcuts.
 
+**For Terminal** (one-time handshake — run this, click OK when prompted, then `Ctrl+C`):
 ```bash
 /opt/homebrew/bin/ffmpeg -f avfoundation -i ":default" /tmp/test.wav
-
 ```
 
-Click **"OK"** when macOS prompts for Microphone permissions, then press `Ctrl + C` to stop it.
+**For Shortcuts:**
+Go to **System Settings → Privacy & Security → Microphone** and enable **Shortcuts**.
 
-### Step 2: Create the macOS Shortcut
+### Step 2: Enable Notifications
 
-1. Open the **Shortcuts** app on your Mac.
-2. Click **+** to create a new shortcut and name it **"Whisper Mic"**.
-3. Search for the **"Run Shell Script"** action and drag it into your workflow.
-4. Set the **Shell** to `/bin/bash` and **Pass Input** to `to stdin`.
-5. Click the **Settings (Sliders) icon** in the right sidebar, click **"Add Keyboard Shortcut"**, and assign your preferred toggle keys (e.g., `⌥⌘T`).
+The script uses `osascript` to show status popups, which routes through Script Editor.
 
-### Step 3: Add the Script
+Go to **System Settings → Notifications → Script Editor** and:
+- Set **Allow Notifications** to ON
+- Set alert style to **Banners** or **Alerts** (not None)
 
-Copy the entire contents of your `whisper-mic-sa.sh` file and paste it directly into the "Run Shell Script" block in the Shortcuts app.
-*(Note: If your installation paths differ from the default `~`, update the `WHISPER_DIR` and `FFMPEG_BIN` variables at the top of the script).*
+### Step 3: Enable Accessibility (Auto-Paste)
+
+The script uses a virtual `Cmd+V` keystroke to paste the transcript. This requires Accessibility access.
+
+Go to **System Settings → Privacy & Security → Accessibility** and enable **Shortcuts**.
+
+---
+
+## ⌨️ SECTION 3: Create the Apple Shortcut
+
+### Step 1: Create the Shortcut
+
+1. Open the **Shortcuts** app
+2. Click **+** to create a new shortcut and name it **"Whisper Mic"**
+3. Search for **"Run Shell Script"** and drag it into the workflow
+4. Set **Shell** to `/bin/bash` and **Pass Input** to `to stdin`
+5. Paste the entire contents of `whisper-stt.sh` into the script block
+
+> **Note:** The paths at the top of the script (`WHISPER_DIR`, `FFMPEG_BIN`) are hardcoded. Update them if your installation is in a different location.
+
+### Step 2: Assign a Keyboard Shortcut
+
+1. Click the **Settings (sliders) icon** in the top-right of the shortcut editor
+2. Click **"Add Keyboard Shortcut"**
+3. Press your preferred key combo (e.g., `⌥⌘T`)
+
+### Step 3: Test It
+
+1. Press your hotkey once — you should hear a **Ping** and see **"✅ Live! Speak now..."**
+2. Speak for a few seconds
+3. Press your hotkey again — you should hear a **Glass** sound and see **"✅ Copied: [your transcript]"**
+4. The transcript is auto-pasted into whatever app was active
+
+If something doesn't work, check the debug log:
+```bash
+cat /tmp/whisper_debug.log
+```
 
 ### ⚙️ How the Workflow Operates (State Machine)
 
@@ -111,21 +145,6 @@ Copy the entire contents of your `whisper-mic-sa.sh` file and paste it directly 
 3. **Stop:** Pressing the hotkey again cleanly interrupts `ffmpeg` and saves the complete audio file.
 4. **Transcribe:** The audio is passed to `whisper-cli`, giving the AI 100% context to eliminate repetitive stutters.
 5. **Paste:** The cleaned text is copied to your clipboard, a "Glass" sound plays, and a virtual `Cmd+V` keystroke pastes the text directly into your current active application.
-
----
-
-## 🔐 Required macOS Permissions (New Machine Checklist)
-
-These permissions must be granted manually on any new Mac. Without them, specific parts of the workflow will silently fail.
-
-| Permission | Where to Grant | Required For |
-| --- | --- | --- |
-| **Microphone → Terminal** | System Settings → Privacy & Security → Microphone → enable Terminal | `ffmpeg` capturing audio in the background |
-| **Microphone → Shortcuts** | System Settings → Privacy & Security → Microphone → enable Shortcuts | Running the script via the Shortcuts hotkey |
-| **Notifications → Script Editor** | System Settings → Notifications → Script Editor → Allow Notifications → set style to **Banners** or **Alerts** | `osascript` showing status popups (recording started, transcript ready, errors) |
-| **Accessibility → Shortcuts** | System Settings → Privacy & Security → Accessibility → enable Shortcuts | Auto-paste (`Cmd+V`) injecting the transcript into the active app |
-
-> **Tip:** Grant all four permissions before your first run. Missing Microphone permission causes silent recording failure. Missing Notifications permission means you'll hear sounds but see no popups. Missing Accessibility permission means the transcript is copied to clipboard but never auto-pasted.
 
 ---
 

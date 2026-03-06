@@ -1,0 +1,12 @@
+# Old/backup scripts
+*-Old.sh
+*-Backup.sh
+
+# whisper.cpp installation (binary + models, too large for git)
+whisper.cpp/
+
+# macOS
+.DS_Store
+
+# Temp/runtime files
+/tmp/

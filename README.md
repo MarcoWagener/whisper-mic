@@ -1,7 +1,3 @@
-Here is the updated and consolidated `README.md`. It is cleanly divided into two main phases: preparing the core engine on a fresh Mac, and then automating it into a seamless global workflow. Duplications have been removed, and the script code block is omitted as requested.
-
----
-
 # 🎤 Whisper Mic (macOS Local Dictation)
 
 A zero-cost, globally accessible, and completely local AI dictation tool for macOS. Powered by `whisper.cpp` and Apple Shortcuts, this setup provides a flawless "Record-then-Transcribe" workflow optimized for complex sentences and specific accents (like South African English), completely eliminating the stuttering and hallucinations common in real-time streaming tools.
@@ -115,6 +111,21 @@ Copy the entire contents of your `whisper-mic-sa.sh` file and paste it directly 
 3. **Stop:** Pressing the hotkey again cleanly interrupts `ffmpeg` and saves the complete audio file.
 4. **Transcribe:** The audio is passed to `whisper-cli`, giving the AI 100% context to eliminate repetitive stutters.
 5. **Paste:** The cleaned text is copied to your clipboard, a "Glass" sound plays, and a virtual `Cmd+V` keystroke pastes the text directly into your current active application.
+
+---
+
+## 🔐 Required macOS Permissions (New Machine Checklist)
+
+These permissions must be granted manually on any new Mac. Without them, specific parts of the workflow will silently fail.
+
+| Permission | Where to Grant | Required For |
+| --- | --- | --- |
+| **Microphone → Terminal** | System Settings → Privacy & Security → Microphone → enable Terminal | `ffmpeg` capturing audio in the background |
+| **Microphone → Shortcuts** | System Settings → Privacy & Security → Microphone → enable Shortcuts | Running the script via the Shortcuts hotkey |
+| **Notifications → Script Editor** | System Settings → Notifications → Script Editor → Allow Notifications → set style to **Banners** or **Alerts** | `osascript` showing status popups (recording started, transcript ready, errors) |
+| **Accessibility → Shortcuts** | System Settings → Privacy & Security → Accessibility → enable Shortcuts | Auto-paste (`Cmd+V`) injecting the transcript into the active app |
+
+> **Tip:** Grant all four permissions before your first run. Missing Microphone permission causes silent recording failure. Missing Notifications permission means you'll hear sounds but see no popups. Missing Accessibility permission means the transcript is copied to clipboard but never auto-pasted.
 
 ---
 

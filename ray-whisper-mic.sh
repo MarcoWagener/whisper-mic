@@ -15,13 +15,20 @@ echo "========================================" >> "$LOG_FILE"
 echo "[$(date)] SCRIPT TRIGGERED (Raycast)" >> "$LOG_FILE"
 
 # --- CONFIGURATION ---
-WHISPER_DIR="/Users/marcowagener/Agents/whisper.cpp"
+# Load user config from ~/.whisper-mic.conf (copy config.example.sh to get started)
+CONFIG="$HOME/.whisper-mic.conf"
+if [ ! -f "$CONFIG" ]; then
+    osascript -e 'display notification "❌ Missing ~/.whisper-mic.conf — see README" with title "Whisper Mic"' 2>>"$LOG_FILE"
+    echo "[$(date)] ERROR: Config file not found at $CONFIG" >> "$LOG_FILE"
+    exit 1
+fi
+source "$CONFIG"
+
 BINARY="$WHISPER_DIR/build/bin/whisper-cli"
 if [ ! -f "$BINARY" ]; then BINARY="$WHISPER_DIR/build/bin/main"; fi
 
-MODEL="$WHISPER_DIR/models/ggml-large-v3-turbo-q5_0.bin"
+MODEL="$WHISPER_DIR/models/$WHISPER_MODEL"
 AUDIO_FILE="/tmp/whisper_audio_sa.wav"
-FFMPEG_BIN="/opt/homebrew/bin/ffmpeg"
 PID_FILE="/tmp/whisper_rec.pid"
 
 echo "[$(date)] BINARY PATH: $BINARY" >> "$LOG_FILE"

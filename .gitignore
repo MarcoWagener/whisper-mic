@@ -5,6 +5,9 @@
 # whisper.cpp installation (binary + models, too large for git)
 whisper.cpp/
 
+# Personal AI assistant instructions (contains machine-specific context)
+CLAUDE.md
+
 # macOS
 .DS_Store
 

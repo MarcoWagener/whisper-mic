@@ -1,6 +1,34 @@
 # 🎤 Whisper Mic (macOS Local Dictation)
 
-A zero-cost, globally accessible, and completely local AI dictation tool for macOS. Powered by `whisper.cpp` and Apple Shortcuts, this setup provides a flawless "Record-then-Transcribe" workflow optimized for complex sentences and specific accents (like South African English), completely eliminating the stuttering and hallucinations common in real-time streaming tools.
+A zero-cost, globally accessible, and completely local AI dictation tool for macOS. Powered by [`whisper.cpp`](https://github.com/ggerganov/whisper.cpp) and triggered via [Apple Shortcuts](https://support.apple.com/guide/shortcuts-mac/welcome/mac) or [Raycast](https://www.raycast.com), this setup provides a flawless "Record-then-Transcribe" workflow optimized for complex sentences and specific accents (like South African English), completely eliminating the stuttering and hallucinations common in real-time streaming tools.
+
+---
+
+## ⚙️ SECTION 0: Configuration
+
+Both scripts load their paths from `~/.whisper-mic.conf` — a local file that is never committed to git, keeping your personal paths private.
+
+### Step 1: Create your config file
+
+```bash
+cp config.example.sh ~/.whisper-mic.conf
+```
+
+### Step 2: Edit it with your paths
+
+```bash
+nano ~/.whisper-mic.conf
+```
+
+Set the following three values:
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `WHISPER_DIR` | Path to your `whisper.cpp` installation | `$HOME/whisper.cpp` |
+| `FFMPEG_BIN` | Path to your `ffmpeg` binary | `/opt/homebrew/bin/ffmpeg` (Apple Silicon) |
+| `WHISPER_MODEL` | Model filename inside `$WHISPER_DIR/models/` | `ggml-large-v3-turbo-q5_0.bin` |
+
+> **Intel Mac users:** change `FFMPEG_BIN` to `/usr/local/bin/ffmpeg`.
 
 ---
 
@@ -118,7 +146,7 @@ Go to **System Settings → Privacy & Security → Accessibility** and enable bo
 4. Set **Shell** to `/bin/bash` and **Pass Input** to `to stdin`
 5. Paste the entire contents of `whisper-stt.sh` into the script block
 
-> **Note:** The paths at the top of the script (`WHISPER_DIR`, `FFMPEG_BIN`) are hardcoded. Update them if your installation differs.
+> **Note:** The script loads paths from `~/.whisper-mic.conf`. Ensure you've completed Section 0 before testing.
 
 ### Step 2: Assign a Keyboard Shortcut
 

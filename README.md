@@ -78,23 +78,21 @@ cd ~/whisper.cpp/build/bin
 
 ## 🚀 SECTION 2: macOS Permissions Setup
 
-*These must be granted before the Shortcut will work fully. Do this once on any new machine.*
+*Grant these once on any new machine. Both the Shortcuts and Raycast triggers share the same requirements.*
 
 ### Step 1: Grant Microphone Access
-
-Because `ffmpeg` runs in the background via Shortcuts, macOS requires explicit permission for both Terminal and Shortcuts.
 
 **For Terminal** (one-time handshake — run this, click OK when prompted, then `Ctrl+C`):
 ```bash
 /opt/homebrew/bin/ffmpeg -f avfoundation -i ":default" /tmp/test.wav
 ```
 
-**For Shortcuts:**
-Go to **System Settings → Privacy & Security → Microphone** and enable **Shortcuts**.
+**For Shortcuts and Raycast:**
+Go to **System Settings → Privacy & Security → Microphone** and enable both **Shortcuts** and **Raycast**.
 
 ### Step 2: Enable Notifications
 
-The script uses `osascript` to show status popups, which routes through Script Editor.
+The script uses `osascript` for status popups, which routes through Script Editor regardless of what triggers the script.
 
 Go to **System Settings → Notifications → Script Editor** and:
 - Set **Allow Notifications** to ON
@@ -102,49 +100,72 @@ Go to **System Settings → Notifications → Script Editor** and:
 
 ### Step 3: Enable Accessibility (Auto-Paste)
 
-The script uses a virtual `Cmd+V` keystroke to paste the transcript. This requires Accessibility access.
+The script sends a virtual `Cmd+V` keystroke to paste the transcript into the active app.
 
-Go to **System Settings → Privacy & Security → Accessibility** and enable **Shortcuts**.
+Go to **System Settings → Privacy & Security → Accessibility** and enable both **Shortcuts** and **Raycast**.
 
 ---
 
-## ⌨️ SECTION 3: Create the Apple Shortcut
+## ⌨️ SECTION 3: Apple Shortcuts Setup
+
+*Use this for most apps. For apps that intercept keystrokes (e.g. VSCode, Claude Code), use the Raycast trigger in Section 4 instead.*
 
 ### Step 1: Create the Shortcut
 
 1. Open the **Shortcuts** app
-2. Click **+** to create a new shortcut and name it **"Whisper Mic"**
+2. Click **+** and name it **"Whisper Mic"**
 3. Search for **"Run Shell Script"** and drag it into the workflow
 4. Set **Shell** to `/bin/bash` and **Pass Input** to `to stdin`
 5. Paste the entire contents of `whisper-stt.sh` into the script block
 
-> **Note:** The paths at the top of the script (`WHISPER_DIR`, `FFMPEG_BIN`) are hardcoded. Update them if your installation is in a different location.
+> **Note:** The paths at the top of the script (`WHISPER_DIR`, `FFMPEG_BIN`) are hardcoded. Update them if your installation differs.
 
 ### Step 2: Assign a Keyboard Shortcut
 
 1. Click the **Settings (sliders) icon** in the top-right of the shortcut editor
-2. Click **"Add Keyboard Shortcut"**
-3. Press your preferred key combo (e.g., `⌥⌘T`)
+2. Click **"Add Keyboard Shortcut"** and press your preferred combo (e.g., `⌃⌥⌘T`)
 
-### Step 3: Test It
+---
 
-1. Press your hotkey once — you should hear a **Ping** and see **"✅ Live! Speak now..."**
+## 🚀 SECTION 4: Raycast Setup (Recommended for VSCode & Claude Code)
+
+Apple Shortcuts cannot fire when focus is inside a VSCode input box or similar text fields — the app intercepts the keystroke first. Raycast operates at a lower system level and fires globally regardless of focus.
+
+### Step 1: Install Raycast
+
+Download from [raycast.com](https://raycast.com) (free).
+
+### Step 2: Add the Script Commands Directory
+
+1. Open **Raycast Settings → Extensions → Script Commands**
+2. Click **Add Directory** and select the folder containing this repo
+3. Raycast will automatically detect `ray-whisper-mic.sh` and register it as **"Whisper Mic"**
+
+### Step 3: Confirm the Hotkey
+
+The shortcut `⌃⌥⌘T` is embedded in the script header and Raycast picks it up automatically. Confirm it appears under the script command in Raycast settings.
+
+### Step 4: Test It
+
+1. Press `⌃⌥⌘T` from any app (including VSCode or Claude Code input) — you should hear a **Ping** and see **"✅ Live! Speak now..."**
 2. Speak for a few seconds
-3. Press your hotkey again — you should hear a **Glass** sound and see **"✅ Copied: [your transcript]"**
-4. The transcript is auto-pasted into whatever app was active
+3. Press `⌃⌥⌘T` again — you should hear a **Glass** sound and see **"✅ Copied: [your transcript]"**
+4. The transcript is auto-pasted into the active field
 
 If something doesn't work, check the debug log:
 ```bash
 cat /tmp/whisper_debug.log
 ```
 
+---
+
 ### ⚙️ How the Workflow Operates (State Machine)
 
-1. **Start:** Pressing the hotkey launches `ffmpeg` in the background, targeting your default system mic (e.g., AirPods).
-2. **Cue:** It plays a system "Ping" sound and shows a "Live" notification. You are free to dictate.
-3. **Stop:** Pressing the hotkey again cleanly interrupts `ffmpeg` and saves the complete audio file.
-4. **Transcribe:** The audio is passed to `whisper-cli`, giving the AI 100% context to eliminate repetitive stutters.
-5. **Paste:** The cleaned text is copied to your clipboard, a "Glass" sound plays, and a virtual `Cmd+V` keystroke pastes the text directly into your current active application.
+1. **Start:** Pressing the hotkey launches `ffmpeg` in the background, targeting your default system mic.
+2. **Cue:** A "Ping" sound plays and a "Live" notification appears. Speak freely.
+3. **Stop:** Pressing the hotkey again cleanly interrupts `ffmpeg` and saves the audio file.
+4. **Transcribe:** The full audio is passed to `whisper-cli` for accurate, stutter-free transcription.
+5. **Paste:** The transcript is copied to clipboard, a "Glass" sound plays, and a virtual `Cmd+V` pastes it into the active app.
 
 ---
 
@@ -167,4 +188,7 @@ cat /tmp/whisper_debug.log
 | **Missing `whisper-stream` binary** | Re-run Section 1, Step 2 (your build failed). |
 | **Model download stalls** | Ensure stable internet, or try a smaller model like `ggml-base.en-q5_0.bin` for testing. |
 | **No audio captured in Shortcut** | Ensure you ran the `ffmpeg` microphone permission handshake (Section 2, Step 1). |
-| **Shortcut fails silently** | Check the auto-generated debug log by running `cat /tmp/whisper_debug.log` in Terminal. Ensure *System Settings > Privacy & Security > Shortcuts > Allow Running Scripts* is ON. |
+| **Shortcut fails silently** | Check `cat /tmp/whisper_debug.log`. Ensure *System Settings > Privacy & Security > Shortcuts > Allow Running Scripts* is ON. |
+| **Hotkey not firing in VSCode / Claude Code** | Use the Raycast trigger (Section 4) instead — Shortcuts cannot compete with VSCode's keystroke interception. |
+| **Raycast script not appearing** | Ensure the repo folder is added as a Script Commands directory in Raycast Settings → Extensions. |
+| **Auto-paste not working via Raycast** | Enable Raycast in *System Settings > Privacy & Security > Accessibility*. |

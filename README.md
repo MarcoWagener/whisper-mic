@@ -1,12 +1,12 @@
 # 🎤 Whisper Mic (macOS Local Dictation)
 
-A zero-cost, globally accessible, and completely local AI dictation tool for macOS. Powered by [`whisper.cpp`](https://github.com/ggerganov/whisper.cpp) and triggered via [Apple Shortcuts](https://support.apple.com/guide/shortcuts-mac/welcome/mac) or [Raycast](https://www.raycast.com), this setup provides a flawless "Record-then-Transcribe" workflow optimized for complex sentences and specific accents (like South African English), completely eliminating the stuttering and hallucinations common in real-time streaming tools.
+A zero-cost, globally accessible, and completely local AI dictation tool for macOS. Powered by [`whisper.cpp`](https://github.com/ggerganov/whisper.cpp) and triggered via [Raycast](https://www.raycast.com), this setup provides a flawless "Record-then-Transcribe" workflow optimized for complex sentences and specific accents (like South African English), completely eliminating the stuttering and hallucinations common in real-time streaming tools.
 
 ---
 
 ## ⚙️ SECTION 0: Configuration
 
-Both scripts load their paths from `~/.whisper-mic.conf` — a local file that is never committed to git, keeping your personal paths private.
+The script loads its paths from `~/.whisper-mic.conf` — a local file that is never committed to git, keeping your personal paths private.
 
 ### Step 1: Create your config file
 
@@ -47,8 +47,8 @@ xcode-select --install
 # 2. Install Homebrew (macOS package manager)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# 3. Install build tools and audio dependencies
-brew install cmake ffmpeg sdl2 ninja
+# 3. Install build tools, audio dependencies, and notification tool
+brew install cmake ffmpeg sdl2 ninja terminal-notifier
 
 # 4. Verify cmake installation (Should show 3.28+)
 cmake --version
@@ -106,8 +106,6 @@ cd ~/whisper.cpp/build/bin
 
 ## 🚀 SECTION 2: macOS Permissions Setup
 
-*Grant these once on any new machine. Both the Shortcuts and Raycast triggers share the same requirements.*
-
 ### Step 1: Grant Microphone Access
 
 **For Terminal** (one-time handshake — run this, click OK when prompted, then `Ctrl+C`):
@@ -115,14 +113,14 @@ cd ~/whisper.cpp/build/bin
 /opt/homebrew/bin/ffmpeg -f avfoundation -i ":default" /tmp/test.wav
 ```
 
-**For Shortcuts and Raycast:**
-Go to **System Settings → Privacy & Security → Microphone** and enable both **Shortcuts** and **Raycast**.
+**For Raycast:**
+Go to **System Settings → Privacy & Security → Microphone** and enable **Raycast**.
 
 ### Step 2: Enable Notifications
 
-The script uses `osascript` for status popups, which routes through Script Editor regardless of what triggers the script.
+The script uses `terminal-notifier` to send status popups, routing them through Raycast.
 
-Go to **System Settings → Notifications → Script Editor** and:
+Go to **System Settings → Notifications → Raycast** and:
 - Set **Allow Notifications** to ON
 - Set alert style to **Banners** or **Alerts** (not None)
 
@@ -130,34 +128,11 @@ Go to **System Settings → Notifications → Script Editor** and:
 
 The script sends a virtual `Cmd+V` keystroke to paste the transcript into the active app.
 
-Go to **System Settings → Privacy & Security → Accessibility** and enable both **Shortcuts** and **Raycast**.
+Go to **System Settings → Privacy & Security → Accessibility** and enable **Raycast**.
 
 ---
 
-## ⌨️ SECTION 3: Apple Shortcuts Setup
-
-*Use this for most apps. For apps that intercept keystrokes (e.g. VSCode, Claude Code), use the Raycast trigger in Section 4 instead.*
-
-### Step 1: Create the Shortcut
-
-1. Open the **Shortcuts** app
-2. Click **+** and name it **"Whisper Mic"**
-3. Search for **"Run Shell Script"** and drag it into the workflow
-4. Set **Shell** to `/bin/bash` and **Pass Input** to `to stdin`
-5. Paste the entire contents of `whisper-stt.sh` into the script block
-
-> **Note:** The script loads paths from `~/.whisper-mic.conf`. Ensure you've completed Section 0 before testing.
-
-### Step 2: Assign a Keyboard Shortcut
-
-1. Click the **Settings (sliders) icon** in the top-right of the shortcut editor
-2. Click **"Add Keyboard Shortcut"** and press your preferred combo (e.g., `⌃⌥⌘T`)
-
----
-
-## 🚀 SECTION 4: Raycast Setup (Recommended for VSCode & Claude Code)
-
-Apple Shortcuts cannot fire when focus is inside a VSCode input box or similar text fields — the app intercepts the keystroke first. Raycast operates at a lower system level and fires globally regardless of focus.
+## ⌨️ SECTION 3: Raycast Setup
 
 ### Step 1: Install Raycast
 
@@ -215,8 +190,8 @@ cat /tmp/whisper_debug.log
 | **`xcode-select: error`** | Run `xcode-select --install` |
 | **Missing `whisper-stream` binary** | Re-run Section 1, Step 2 (your build failed). |
 | **Model download stalls** | Ensure stable internet, or try a smaller model like `ggml-base.en-q5_0.bin` for testing. |
-| **No audio captured in Shortcut** | Ensure you ran the `ffmpeg` microphone permission handshake (Section 2, Step 1). |
-| **Shortcut fails silently** | Check `cat /tmp/whisper_debug.log`. Ensure *System Settings > Privacy & Security > Shortcuts > Allow Running Scripts* is ON. |
-| **Hotkey not firing in VSCode / Claude Code** | Use the Raycast trigger (Section 4) instead — Shortcuts cannot compete with VSCode's keystroke interception. |
+| **No audio captured** | Ensure you ran the `ffmpeg` microphone permission handshake (Section 2, Step 1). |
+| **No notifications appearing** | Check Raycast is enabled in *System Settings > Notifications*. Ensure `terminal-notifier` is installed (`brew install terminal-notifier`). |
+| **Hotkey not firing in VSCode / Claude Code** | Raycast operates at a lower system level than Shortcuts and should fire globally. Ensure Raycast has Accessibility permission (Section 2, Step 3). |
 | **Raycast script not appearing** | Ensure the repo folder is added as a Script Commands directory in Raycast Settings → Extensions. |
-| **Auto-paste not working via Raycast** | Enable Raycast in *System Settings > Privacy & Security > Accessibility*. |
+| **Auto-paste not working** | Enable Raycast in *System Settings > Privacy & Security > Accessibility*. |

@@ -14,11 +14,15 @@ LOG_FILE="/tmp/whisper_debug.log"
 echo "========================================" >> "$LOG_FILE"
 echo "[$(date)] SCRIPT TRIGGERED (Raycast)" >> "$LOG_FILE"
 
+# Send a native macOS notification via terminal-notifier (follows system dark/light mode, shows Voice Memos mic icon)
+NOTIFIER="/opt/homebrew/bin/terminal-notifier"
+notify() { "$NOTIFIER" -title "Whisper Mic" -message "$1" -sender com.apple.VoiceMemos 2>>"$LOG_FILE"; }
+
 # --- CONFIGURATION ---
 # Load user config from ~/.whisper-mic.conf (copy config.example.sh to get started)
 CONFIG="$HOME/.whisper-mic.conf"
 if [ ! -f "$CONFIG" ]; then
-    osascript -e 'display notification "❌ Missing ~/.whisper-mic.conf — see README" with title "Whisper Mic"' 2>>"$LOG_FILE"
+    notify "❌ Missing ~/.whisper-mic.conf — see README"
     echo "[$(date)] ERROR: Config file not found at $CONFIG" >> "$LOG_FILE"
     exit 1
 fi
@@ -41,7 +45,7 @@ if [ -f "$PID_FILE" ]; then
     rm -f "$PID_FILE"
 
     echo "[$(date)] Killing PID: $PID" >> "$LOG_FILE"
-    osascript -e 'display notification "⏳ Finalizing transcript..." with title "Whisper Mic"' 2>>"$LOG_FILE"
+    notify "⏳ Finalizing transcript..."
 
     # Send Interrupt signal to FFmpeg
     kill -INT "$PID" 2>>"$LOG_FILE"
@@ -58,13 +62,13 @@ if [ -f "$PID_FILE" ]; then
         echo "[$(date)] Cleaned Transcript: $TRANSCRIPT" >> "$LOG_FILE"
         echo -n "$TRANSCRIPT" | pbcopy
         afplay /System/Library/Sounds/Glass.aiff &
-        osascript -e "display notification \"✅ Copied: $TRANSCRIPT\" with title \"Whisper Mic\"" 2>>"$LOG_FILE"
+        notify "✅ Copied: $TRANSCRIPT"
 
         echo "[$(date)] Attempting auto-paste..." >> "$LOG_FILE"
         osascript -e 'tell application "System Events" to keystroke "v" using command down' 2>>"$LOG_FILE"
     else
         echo "[$(date)] ERROR: No transcript generated. Audio might be empty." >> "$LOG_FILE"
-        osascript -e 'display notification "❌ No speech detected" with title "Whisper Mic"' 2>>"$LOG_FILE"
+        notify "❌ No speech detected"
     fi
 else
     # --- STEP 1: STARTING ---
@@ -73,11 +77,11 @@ else
 
     if [ ! -f "$FFMPEG_BIN" ]; then
         echo "[$(date)] ERROR: FFMPEG not found at $FFMPEG_BIN" >> "$LOG_FILE"
-        osascript -e 'display notification "❌ ERROR: FFMPEG not found" with title "Whisper Mic"' 2>>"$LOG_FILE"
+        notify "❌ ERROR: FFMPEG not found"
         exit 1
     fi
 
-    osascript -e 'display notification "🎤 Initializing mic..." with title "Whisper Mic"' 2>>"$LOG_FILE"
+    notify "🎤 Initializing mic..."
 
     echo "[$(date)] Launching FFMPEG..." >> "$LOG_FILE"
     nohup "$FFMPEG_BIN" -y -loglevel error -f avfoundation -i ":default" -ar 16000 -ac 1 "$AUDIO_FILE" >> "$LOG_FILE" 2>&1 &
@@ -88,6 +92,6 @@ else
 
     sleep 0.5
     afplay /System/Library/Sounds/Ping.aiff &
-    osascript -e 'display notification "✅ Live! Speak now..." with title "Whisper Active"' 2>>"$LOG_FILE"
+    notify "✅ Live! Speak now..."
 fi
 echo "[$(date)] END OF RUN" >> "$LOG_FILE"

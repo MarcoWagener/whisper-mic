@@ -8,6 +8,9 @@ whisper.cpp/
 # Personal AI assistant instructions (contains machine-specific context)
 CLAUDE.md
 
+# Apple Shortcuts script — superseded by ray-whisper-mic.sh, kept locally only
+whisper-stt.sh
+
 # macOS
 .DS_Store
 

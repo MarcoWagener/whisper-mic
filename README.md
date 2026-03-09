@@ -4,194 +4,254 @@ A zero-cost, globally accessible, and completely local AI dictation tool for mac
 
 ---
 
-## ⚙️ SECTION 0: Configuration
+## What is this and do I need it?
 
-The script loads its paths from `~/.whisper-mic.conf` — a local file that is never committed to git, keeping your personal paths private.
+**Whisper Mic lets you speak and have your words instantly typed anywhere on your Mac — completely free, completely private, and works even in apps that normally block dictation (like VS Code or Claude).**
 
-### Step 1: Create your config file
+It uses OpenAI's Whisper AI model, but runs 100% locally on your machine. Nothing is sent to the cloud. No subscription. No login.
 
-```bash
-cp config.example.sh ~/.whisper-mic.conf
-```
+### How it works once set up
 
-### Step 2: Edit it with your paths
+1. Press `⌃⌥⌘T` (Control + Option + Command + T) from anywhere
+2. You hear a **ping** — start speaking
+3. Press `⌃⌥⌘T` again when done
+4. You hear a **chime** — your words are automatically typed into whatever app you were in
 
-```bash
-nano ~/.whisper-mic.conf
-```
+That's it. It works in every app, including ones that intercept keyboard shortcuts like VS Code and Claude.
 
-Set the following three values:
+### What you need
 
-| Variable | Description | Default |
+- A Mac running macOS (Apple Silicon recommended — M1 or later)
+- About **30–45 minutes** for the one-time setup
+- Basic comfort copying and pasting Terminal commands (no coding knowledge required)
+- A free app called [Raycast](https://raycast.com) (replaces Spotlight)
+
+### Why not just use macOS built-in dictation?
+
+| | macOS Dictation | Whisper Mic |
 | --- | --- | --- |
-| `WHISPER_DIR` | Path to your `whisper.cpp` installation | `$HOME/whisper.cpp` |
-| `FFMPEG_BIN` | Path to your `ffmpeg` binary | `/opt/homebrew/bin/ffmpeg` (Apple Silicon) |
-| `WHISPER_MODEL` | Model filename inside `$WHISPER_DIR/models/` | `ggml-large-v3-turbo-q5_0.bin` |
-
-> **Intel Mac users:** change `FFMPEG_BIN` to `/usr/local/bin/ffmpeg`.
+| Cost | Free | Free |
+| Privacy | Sent to Apple's servers | 100% local, never leaves your Mac |
+| Accuracy (accents) | Okay | Excellent |
+| Works in VS Code / Claude | No | Yes |
+| Stuttering / hallucinations | Common | None (records first, then transcribes) |
 
 ---
 
-## 🛠 SECTION 1: Core Engine Setup & Terminal Test
+## Setup Overview
 
-*Follow these steps on a clean macOS machine to install the dependencies, build the local model with Apple Metal acceleration, and verify microphone capture.*
+Setup has four parts. Do them in order:
 
-### Step 1: Install System Prerequisites
+| Part | What you're doing | Time |
+| --- | --- | --- |
+| **Part 1** | Install the AI engine and download the model | ~20 min |
+| **Part 2** | Grant macOS permissions (mic, notifications, paste) | ~5 min |
+| **Part 3** | Connect it to Raycast and set your hotkey | ~5 min |
+| **Part 4** | Create your personal config file | ~2 min |
 
-Open your Terminal and install the required build tools and audio processors:
+---
+
+## Part 1: Install the AI Engine
+
+*You'll be copying commands into Terminal. Open Terminal by pressing `⌘ Space` and typing "Terminal".*
+
+### Step 1: Install the build tools
+
+Copy and paste each block into Terminal, one at a time. Press Enter after each.
 
 ```bash
-# 1. Install Xcode Command Line Tools (Click "Install" in the popup)
+# Install Xcode Command Line Tools — a popup will appear, click "Install"
 xcode-select --install
-
-# 2. Install Homebrew (macOS package manager)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# 3. Install build tools, audio dependencies, and notification tool
-brew install cmake ffmpeg sdl2 ninja terminal-notifier
-
-# 4. Verify cmake installation (Should show 3.28+)
-cmake --version
-
 ```
 
-### Step 2: Clone & Build `whisper.cpp`
-
-Download the core repository and build it using Metal (for Apple Silicon GPU acceleration) and SDL2 (for microphone access).
+Wait for that to finish, then:
 
 ```bash
-# Clean install in home directory
-rm -rf ~/whisper.cpp
+# Install Homebrew — macOS's app manager for developer tools
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Then install everything else in one go:
+
+```bash
+# Install the audio recorder, AI build tools, and notification helper
+brew install cmake ffmpeg sdl2 ninja terminal-notifier
+```
+
+> **Intel Mac?** Everything works the same — just note that some paths differ (covered in Part 4).
+
+### Step 2: Download and build the Whisper AI engine
+
+This downloads the Whisper source code and compiles it to run natively on your Mac's GPU. It takes 1–3 minutes.
+
+```bash
 git clone https://github.com/ggerganov/whisper.cpp.git ~/whisper.cpp
 cd ~/whisper.cpp
 mkdir -p models
-
-# Build the binaries
 cmake -B build -DWHISPER_METAL=ON -DWHISPER_SDL2=ON
 cmake --build build --config Release -j
-
 ```
 
-*Note: Build takes 1-3 minutes. Verify success by ensuring the binaries exist in `~/whisper.cpp/build/bin/`.*
+When it finishes, verify it worked by checking that this folder has files in it:
 
-### Step 3: Download Optimized Model
+```bash
+ls ~/whisper.cpp/build/bin/
+```
 
-Download the `large-v3-turbo` model, which is highly optimized for accuracy, speed, and handling accents like South African English.
+You should see `whisper-cli` (or `main`) listed.
+
+### Step 3: Download the AI model
+
+This downloads the speech recognition model (~600MB). It's the brain that converts your voice to text.
 
 ```bash
 cd ~/whisper.cpp
 curl -L -o models/ggml-large-v3-turbo-q5_0.bin \
   https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin
-
 ```
 
-### Step 4: Validate with a Terminal Test
+### Step 4: Quick sanity check (optional but recommended)
 
-Before automating, ensure the core engine can hear you.
+Run this to confirm your microphone is being picked up by the engine:
 
 ```bash
 cd ~/whisper.cpp/build/bin
 ./whisper-stream -m ../../models/ggml-large-v3-turbo-q5_0.bin -l en -t 8 --step 400 --length 5000 -f /tmp/sa-english-test.txt
-
 ```
 
-**Success Criteria:**
+Speak a sentence, wait a few seconds, then press `Ctrl+C`. Run this to see if it was transcribed:
 
-1. No errors appear, and live mic capture starts.
-2. Speak clearly into your mic (e.g., "Testing Cape Town South African English...").
-3. Wait 10-15 seconds, press `Ctrl+C` to stop.
-4. Run `cat /tmp/sa-english-test.txt` to verify your transcript was captured perfectly.
+```bash
+cat /tmp/sa-english-test.txt
+```
+
+If you see your words, the engine is working perfectly.
 
 ---
 
-## 🚀 SECTION 2: macOS Permissions Setup
+## Part 2: Grant macOS Permissions
 
-### Step 1: Grant Microphone Access
+macOS requires explicit permission for microphone access, notifications, and auto-paste. You only do this once.
 
-**For Terminal** (one-time handshake — run this, click OK when prompted, then `Ctrl+C`):
+### Step 1: Microphone access
+
+**For Terminal** — run this command, click **OK** when macOS prompts you, then press `Ctrl+C` to stop it:
+
 ```bash
 /opt/homebrew/bin/ffmpeg -f avfoundation -i ":default" /tmp/test.wav
 ```
 
-**For Raycast:**
-Go to **System Settings → Privacy & Security → Microphone** and enable **Raycast**.
+**For Raycast** — go to **System Settings → Privacy & Security → Microphone** and turn on **Raycast**.
 
-### Step 2: Enable Notifications
-
-The script uses `terminal-notifier` to send status popups, routing them through Raycast.
+### Step 2: Notifications
 
 Go to **System Settings → Notifications → Raycast** and:
 - Set **Allow Notifications** to ON
-- Set alert style to **Banners** or **Alerts** (not None)
+- Set the alert style to **Banners** or **Alerts** (not "None")
 
-### Step 3: Enable Accessibility (Auto-Paste)
+### Step 3: Auto-paste permission
 
-The script sends a virtual `Cmd+V` keystroke to paste the transcript into the active app.
+The tool automatically pastes your transcript into the active app after transcription. To allow this:
 
-Go to **System Settings → Privacy & Security → Accessibility** and enable **Raycast**.
+Go to **System Settings → Privacy & Security → Accessibility** and turn on **Raycast**.
 
 ---
 
-## ⌨️ SECTION 3: Raycast Setup
+## Part 3: Connect to Raycast
+
+[Raycast](https://raycast.com) is a free Spotlight replacement. It's what lets the hotkey work globally — even inside VS Code and other apps that would normally block it.
 
 ### Step 1: Install Raycast
 
-Download from [raycast.com](https://raycast.com) (free).
+Download and install it from [raycast.com](https://raycast.com).
 
-### Step 2: Add the Script Commands Directory
+### Step 2: Add this repo as a Script Commands directory
 
-1. Open **Raycast Settings → Extensions → Script Commands**
-2. Click **Add Directory** and select the folder containing this repo
-3. Raycast will automatically detect `ray-whisper-mic.sh` and register it as **"Whisper Mic"**
+1. Open **Raycast Settings** (`⌘,` from Raycast)
+2. Go to **Extensions → Script Commands**
+3. Click **Add Directory** and select the folder where you cloned/downloaded this repo
+4. Raycast will automatically detect `ray-whisper-mic.sh` and register it as **"Whisper Mic"**
 
-### Step 3: Confirm the Hotkey
+### Step 3: Confirm your hotkey
 
-The shortcut `⌃⌥⌘T` is embedded in the script header and Raycast picks it up automatically. Confirm it appears under the script command in Raycast settings.
+The shortcut `⌃⌥⌘T` is baked into the script and Raycast picks it up automatically. Open Raycast Settings → Extensions and confirm it shows up next to "Whisper Mic".
 
-### Step 4: Test It
+### Step 4: Test it
 
-1. Press `⌃⌥⌘T` from any app (including VSCode or Claude Code input) — you should hear a **Ping** and see **"✅ Live! Speak now..."**
-2. Speak for a few seconds
-3. Press `⌃⌥⌘T` again — you should hear a **Glass** sound and see **"✅ Copied: [your transcript]"**
-4. The transcript is auto-pasted into the active field
+1. Press `⌃⌥⌘T` from any app — you should hear a **Ping** and see a notification: **"✅ Live! Speak now..."**
+2. Say a few words
+3. Press `⌃⌥⌘T` again — you should hear a **Glass chime** and see **"✅ Copied: [your words]"**
+4. Your words are automatically pasted into whatever was active
 
-If something doesn't work, check the debug log:
+If nothing happens, check the debug log:
 ```bash
 cat /tmp/whisper_debug.log
 ```
 
 ---
 
-### ⚙️ How the Workflow Operates (State Machine)
+## Part 4: Personal Config File
 
-1. **Start:** Pressing the hotkey launches `ffmpeg` in the background, targeting your default system mic.
-2. **Cue:** A "Ping" sound plays and a "Live" notification appears. Speak freely.
-3. **Stop:** Pressing the hotkey again cleanly interrupts `ffmpeg` and saves the audio file.
-4. **Transcribe:** The full audio is passed to `whisper-cli` for accurate, stutter-free transcription.
-5. **Paste:** The transcript is copied to clipboard, a "Glass" sound plays, and a virtual `Cmd+V` pastes it into the active app.
+The script reads your local paths from a config file so nothing machine-specific gets committed to git.
+
+### Step 1: Create the config file
+
+```bash
+cp config.example.sh ~/.whisper-mic.conf
+```
+
+### Step 2: Edit it
+
+```bash
+nano ~/.whisper-mic.conf
+```
+
+The defaults work for most Apple Silicon Macs. If you installed things in non-standard locations, update these three values:
+
+| Variable | What it points to | Default |
+| --- | --- | --- |
+| `WHISPER_DIR` | Where you cloned `whisper.cpp` | `$HOME/whisper.cpp` |
+| `FFMPEG_BIN` | Your `ffmpeg` binary | `/opt/homebrew/bin/ffmpeg` |
+| `WHISPER_MODEL` | The model file inside `models/` | `ggml-large-v3-turbo-q5_0.bin` |
+
+> **Intel Mac users:** change `FFMPEG_BIN` to `/usr/local/bin/ffmpeg`.
+
+Save with `Ctrl+O`, exit with `Ctrl+X`.
 
 ---
 
-## 🐛 Troubleshooting & Optimizations
+## How it works under the hood
 
-### South African English Optimization Tips
+Each hotkey press toggles a state machine:
+
+1. **Start:** Raycast runs the script, which launches `ffmpeg` in the background capturing your mic
+2. **Cue:** A Ping plays and a notification confirms it's live
+3. **Stop:** The next hotkey press sends a stop signal to `ffmpeg`, which saves the audio file
+4. **Transcribe:** The full recording is passed to `whisper-cli` in one shot — no streaming, no hallucinations
+5. **Paste:** The transcript is copied to your clipboard and a virtual `Cmd+V` pastes it into the active app
+
+---
+
+## Troubleshooting
+
+### Accuracy tips for non-standard accents (e.g. South African English)
 
 | Issue | Fix |
 | --- | --- |
-| **Poor overall accuracy** | Speak 10-20% slower, keep the mic close, and ensure a quiet room. |
-| **"Data" transcribes as "dater"** | Enunciate strongly or spell it out (`d-a-t-a`) if heavily accented. |
-| **"Braai" transcribes incorrectly** | Enunciate the rolling 'r' and double vowel strongly (`b-r-a-a-i`). |
+| **Poor overall accuracy** | Speak 10–20% slower, keep the mic close, ensure a quiet room |
+| **"Data" transcribes as "dater"** | Enunciate strongly, or spell it out if needed |
+| **Uncommon words transcribe wrong** | Speak slightly slower and enunciate the syllables clearly |
 
-### Common System Errors
+### Common errors
 
-| Error / Issue | Exact Fix |
+| Error / Issue | Fix |
 | --- | --- |
 | **`cmake: command not found`** | Run `brew install cmake` |
 | **`xcode-select: error`** | Run `xcode-select --install` |
-| **Missing `whisper-stream` binary** | Re-run Section 1, Step 2 (your build failed). |
-| **Model download stalls** | Ensure stable internet, or try a smaller model like `ggml-base.en-q5_0.bin` for testing. |
-| **No audio captured** | Ensure you ran the `ffmpeg` microphone permission handshake (Section 2, Step 1). |
-| **No notifications appearing** | Check Raycast is enabled in *System Settings > Notifications*. Ensure `terminal-notifier` is installed (`brew install terminal-notifier`). |
-| **Hotkey not firing in VSCode / Claude Code** | Raycast operates at a lower system level than Shortcuts and should fire globally. Ensure Raycast has Accessibility permission (Section 2, Step 3). |
-| **Raycast script not appearing** | Ensure the repo folder is added as a Script Commands directory in Raycast Settings → Extensions. |
-| **Auto-paste not working** | Enable Raycast in *System Settings > Privacy & Security > Accessibility*. |
+| **Missing `whisper-cli` binary** | Re-run Part 1, Step 2 — your build likely failed |
+| **Model download stalls** | Check your internet connection, or try a smaller test model: `ggml-base.en-q5_0.bin` |
+| **No audio captured** | Re-do the `ffmpeg` microphone handshake in Part 2, Step 1 |
+| **No notifications appearing** | Check Raycast is enabled in *System Settings → Notifications*. Run `brew install terminal-notifier` if missing. |
+| **Hotkey not firing in VS Code / Claude** | Ensure Raycast has Accessibility permission (Part 2, Step 3) |
+| **Raycast script not appearing** | Re-add the directory in Raycast Settings → Extensions → Script Commands |
+| **Auto-paste not working** | Enable Raycast in *System Settings → Privacy & Security → Accessibility* |

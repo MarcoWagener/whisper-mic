@@ -170,7 +170,7 @@ Download and install it from [raycast.com](https://raycast.com).
 1. Open **Raycast Settings** (`⌘,` from Raycast)
 2. Go to **Extensions → Script Commands**
 3. Click **Add Directory** and select the folder where you cloned/downloaded this repo
-4. Raycast will automatically detect `ray-whisper-mic.sh` and register it as **"Whisper Mic"**
+4. Raycast will automatically detect `whisper-mic.sh` and register it as **"Whisper Mic"**
 
 ### Step 3: Confirm your hotkey
 
@@ -213,6 +213,9 @@ The defaults work for most Apple Silicon Macs. If you installed things in non-st
 | `WHISPER_DIR` | Where you cloned `whisper.cpp` | `$HOME/whisper.cpp` |
 | `FFMPEG_BIN` | Your `ffmpeg` binary | `/opt/homebrew/bin/ffmpeg` |
 | `WHISPER_MODEL` | The model file inside `models/` | `ggml-large-v3-turbo-q5_0.bin` |
+| `MAX_RECORD_MINS` | Auto-stop recording after this many minutes | `10` |
+
+> **Safety:** `MAX_RECORD_MINS` is a hard cap passed directly to `ffmpeg` — if you forget to stop recording, it will automatically stop after this many minutes, preventing runaway disk writes. Press the hotkey once more after it stops to trigger transcription as normal.
 
 > **Intel Mac users:** change `FFMPEG_BIN` to `/usr/local/bin/ffmpeg`.
 

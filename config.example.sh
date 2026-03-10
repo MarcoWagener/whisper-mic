@@ -20,3 +20,6 @@ FFMPEG_BIN="/opt/homebrew/bin/ffmpeg"
 # Recommended: ggml-large-v3-turbo-q5_0.bin (best accuracy, fast on Apple Silicon)
 # Lightweight:  ggml-base.en-q5_0.bin (faster, lower accuracy)
 WHISPER_MODEL="ggml-large-v3-turbo-q5_0.bin"
+
+# Maximum recording duration in minutes — ffmpeg auto-stops to prevent runaway disk writes
+MAX_RECORD_MINS=10

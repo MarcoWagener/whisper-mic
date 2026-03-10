@@ -84,7 +84,7 @@ else
     notify "🎤 Initializing mic..."
 
     echo "[$(date)] Launching FFMPEG..." >> "$LOG_FILE"
-    nohup "$FFMPEG_BIN" -y -loglevel error -f avfoundation -i ":default" -ar 16000 -ac 1 "$AUDIO_FILE" >> "$LOG_FILE" 2>&1 &
+    nohup "$FFMPEG_BIN" -y -loglevel error -f avfoundation -i ":default" -ar 16000 -ac 1 -t $(( ${MAX_RECORD_MINS:-10} * 60 )) "$AUDIO_FILE" >> "$LOG_FILE" 2>&1 &
 
     PID=$!
     echo $PID > "$PID_FILE"

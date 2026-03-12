@@ -45,9 +45,9 @@ Setup has four parts. Do them in order:
 | Part | What you're doing | Time |
 | --- | --- | --- |
 | **Part 1** | Install the AI engine and download the model | ~20 min |
-| **Part 2** | Grant macOS permissions (mic, notifications, paste) | ~5 min |
-| **Part 3** | Connect it to Raycast and set your hotkey | ~5 min |
-| **Part 4** | Create your personal config file | ~2 min |
+| **Part 2** | Install Raycast and add the script | ~5 min |
+| **Part 3** | Grant macOS permissions (mic, notifications, paste) | ~5 min |
+| **Part 4** | Create your personal config file and test | ~5 min |
 
 ---
 
@@ -129,7 +129,28 @@ If you see your words, the engine is working perfectly.
 
 ---
 
-## Part 2: Grant macOS Permissions
+## Part 2: Install Raycast and Add the Script
+
+[Raycast](https://raycast.com) is a free Spotlight replacement. It's what lets the hotkey work globally — even inside VS Code and other apps that would normally block it.
+
+### Step 1: Install Raycast
+
+Download and install it from [raycast.com](https://raycast.com).
+
+### Step 2: Add this repo as a Script Commands directory
+
+1. Open **Raycast Settings** (`⌘,` from Raycast)
+2. Go to **Extensions → Script Commands**
+3. Click **Add Directory** and select the folder where you cloned/downloaded this repo
+4. Raycast will automatically detect `whisper-mic.sh` and register it as **"Whisper Mic"**
+
+### Step 3: Confirm your hotkey
+
+The shortcut `⌥⌘T` is baked into the script and Raycast picks it up automatically. Open Raycast Settings → Extensions and confirm it shows up next to "Whisper Mic".
+
+---
+
+## Part 3: Grant macOS Permissions
 
 macOS requires explicit permission for microphone access, notifications, and auto-paste. You only do this once.
 
@@ -157,44 +178,11 @@ Go to **System Settings → Privacy & Security → Accessibility** and turn on *
 
 ---
 
-## Part 3: Connect to Raycast
-
-[Raycast](https://raycast.com) is a free Spotlight replacement. It's what lets the hotkey work globally — even inside VS Code and other apps that would normally block it.
-
-### Step 1: Install Raycast
-
-Download and install it from [raycast.com](https://raycast.com).
-
-### Step 2: Add this repo as a Script Commands directory
-
-1. Open **Raycast Settings** (`⌘,` from Raycast)
-2. Go to **Extensions → Script Commands**
-3. Click **Add Directory** and select the folder where you cloned/downloaded this repo
-4. Raycast will automatically detect `whisper-mic.sh` and register it as **"Whisper Mic"**
-
-### Step 3: Confirm your hotkey
-
-The shortcut `⌥⌘T` is baked into the script and Raycast picks it up automatically. Open Raycast Settings → Extensions and confirm it shows up next to "Whisper Mic".
-
-### Step 4: Test it
-
-1. Press `⌥⌘T` from any app — you should hear a **Ping** and see a notification: **"✅ Live! Speak now..."**
-2. Say a few words
-3. Press `⌥⌘T` again — you should hear a **Glass chime** and see **"✅ Copied: [your words]"**
-4. Your words are automatically pasted into whatever was active
-
-If nothing happens, check the debug log:
-```bash
-cat /tmp/whisper_debug.log
-```
-
----
-
-## Part 4: Personal Config File
-
-The script reads your local paths from a config file so nothing machine-specific gets committed to git.
+## Part 4: Personal Config File and Test
 
 ### Step 1: Create the config file
+
+The script reads your local paths from a config file so nothing machine-specific gets committed to git.
 
 ```bash
 cp config.example.sh ~/.whisper-mic.conf
@@ -206,7 +194,7 @@ cp config.example.sh ~/.whisper-mic.conf
 nano ~/.whisper-mic.conf
 ```
 
-The defaults work for most Apple Silicon Macs. If you installed things in non-standard locations, update these three values:
+The defaults work for most Apple Silicon Macs. If you installed things in non-standard locations, update these values:
 
 | Variable | What it points to | Default |
 | --- | --- | --- |
@@ -220,6 +208,18 @@ The defaults work for most Apple Silicon Macs. If you installed things in non-st
 > **Intel Mac users:** change `FFMPEG_BIN` to `/usr/local/bin/ffmpeg`.
 
 Save with `Ctrl+O`, exit with `Ctrl+X`.
+
+### Step 3: Test it
+
+1. Press `⌥⌘T` from any app — you should hear a **Ping** and see a notification: **"✅ Live! Speak now..."**
+2. Say a few words
+3. Press `⌥⌘T` again — you should hear a **Glass chime** and see **"✅ Copied: [your words]"**
+4. Your words are automatically pasted into whatever was active
+
+If nothing happens, check the debug log:
+```bash
+cat /tmp/whisper_debug.log
+```
 
 ---
 
@@ -254,8 +254,8 @@ Each hotkey press toggles a state machine:
 | **`xcode-select: error`** | Run `xcode-select --install` |
 | **Missing `whisper-cli` binary** | Re-run Part 1, Step 2 — your build likely failed |
 | **Model download stalls** | Check your internet connection, or try a smaller test model: `ggml-base.en-q5_0.bin` |
-| **No audio captured** | Re-do the `ffmpeg` microphone handshake in Part 2, Step 1 |
+| **No audio captured** | Re-do the `ffmpeg` microphone handshake in Part 3, Step 1 |
 | **No notifications appearing** | Check Raycast is enabled in *System Settings → Notifications*. Run `brew install terminal-notifier` if missing. |
-| **Hotkey not firing in VS Code / Claude** | Ensure Raycast has Accessibility permission (Part 2, Step 3) |
+| **Hotkey not firing in VS Code / Claude** | Ensure Raycast has Accessibility permission (Part 3, Step 3) |
 | **Raycast script not appearing** | Re-add the directory in Raycast Settings → Extensions → Script Commands |
 | **Auto-paste not working** | Enable Raycast in *System Settings → Privacy & Security → Accessibility* |

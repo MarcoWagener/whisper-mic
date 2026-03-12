@@ -12,9 +12,9 @@ It uses OpenAI's Whisper AI model, but runs 100% locally on your machine. Nothin
 
 ### How it works once set up
 
-1. Press `⌃⌥⌘T` (Control + Option + Command + T) from anywhere
+1. Press `⌥⌘T` (Option + Command + T) from anywhere
 2. You hear a **ping** — start speaking
-3. Press `⌃⌥⌘T` again when done
+3. Press `⌥⌘T` again when done
 4. You hear a **chime** — your words are automatically typed into whatever app you were in
 
 That's it. It works in every app, including ones that intercept keyboard shortcuts like VS Code and Claude.
@@ -31,7 +31,7 @@ That's it. It works in every app, including ones that intercept keyboard shortcu
 | | macOS Dictation | Whisper Mic |
 | --- | --- | --- |
 | Cost | Free | Free |
-| Privacy | Sent to Apple's servers | 100% local, never leaves your Mac |
+| Privacy | Potentially sent to Apple's servers | 100% local, never leaves your Mac |
 | Accuracy (accents) | Okay | Excellent |
 | Works in VS Code / Claude | No | Yes |
 | Stuttering / hallucinations | Common | None (records first, then transcribes) |
@@ -174,13 +174,13 @@ Download and install it from [raycast.com](https://raycast.com).
 
 ### Step 3: Confirm your hotkey
 
-The shortcut `⌃⌥⌘T` is baked into the script and Raycast picks it up automatically. Open Raycast Settings → Extensions and confirm it shows up next to "Whisper Mic".
+The shortcut `⌥⌘T` is baked into the script and Raycast picks it up automatically. Open Raycast Settings → Extensions and confirm it shows up next to "Whisper Mic".
 
 ### Step 4: Test it
 
-1. Press `⌃⌥⌘T` from any app — you should hear a **Ping** and see a notification: **"✅ Live! Speak now..."**
+1. Press `⌥⌘T` from any app — you should hear a **Ping** and see a notification: **"✅ Live! Speak now..."**
 2. Say a few words
-3. Press `⌃⌥⌘T` again — you should hear a **Glass chime** and see **"✅ Copied: [your words]"**
+3. Press `⌥⌘T` again — you should hear a **Glass chime** and see **"✅ Copied: [your words]"**
 4. Your words are automatically pasted into whatever was active
 
 If nothing happens, check the debug log:
@@ -232,6 +232,7 @@ Each hotkey press toggles a state machine:
 3. **Stop:** The next hotkey press sends a stop signal to `ffmpeg`, which saves the audio file
 4. **Transcribe:** The full recording is passed to `whisper-cli` in one shot — no streaming, no hallucinations
 5. **Paste:** The transcript is copied to your clipboard and a virtual `Cmd+V` pastes it into the active app
+6. **Music resume:** If Spotify was playing when you started recording, it automatically resumes once transcription is complete
 
 ---
 

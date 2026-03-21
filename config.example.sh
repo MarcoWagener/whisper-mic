@@ -23,3 +23,9 @@ WHISPER_MODEL="ggml-large-v3-turbo-q5_0.bin"
 
 # Maximum recording duration in minutes — ffmpeg auto-stops to prevent runaway disk writes
 MAX_RECORD_MINS=10
+
+# (Optional) Claude API key for AI post-processing.
+# When set, transcripts are automatically cleaned up: grammar fixed, spelling corrected,
+# filler words removed, and text made more concise — before pasting into the active app.
+# Get a key at: https://console.anthropic.com/
+# CLAUDE_API_KEY="sk-ant-..."

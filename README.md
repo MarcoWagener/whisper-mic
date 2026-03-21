@@ -202,6 +202,7 @@ The defaults work for most Apple Silicon Macs. If you installed things in non-st
 | `FFMPEG_BIN` | Your `ffmpeg` binary | `/opt/homebrew/bin/ffmpeg` |
 | `WHISPER_MODEL` | The model file inside `models/` | `ggml-large-v3-turbo-q5_0.bin` |
 | `MAX_RECORD_MINS` | Auto-stop recording after this many minutes | `10` |
+| `CLAUDE_API_KEY` | Claude API key for AI grammar/spelling polish (optional) | *(unset — disabled)* |
 
 > **Safety:** `MAX_RECORD_MINS` is a hard cap passed directly to `ffmpeg` — if you forget to stop recording, it will automatically stop after this many minutes, preventing runaway disk writes. Press the hotkey once more after it stops to trigger transcription as normal.
 
@@ -233,6 +234,7 @@ Each hotkey press toggles a state machine:
 4. **Transcribe:** The full recording is passed to `whisper-cli` in one shot — no streaming, no hallucinations
 5. **Paste:** The transcript is copied to your clipboard and a virtual `Cmd+V` pastes it into the active app
 6. **Music resume:** If Spotify was playing when you started recording, it automatically resumes once transcription is complete
+7. **Polish (optional):** If `CLAUDE_API_KEY` is set in your config, the transcript is sent to Claude Haiku to fix grammar, spelling, and remove filler words before pasting
 
 ---
 

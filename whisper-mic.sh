@@ -96,7 +96,28 @@ if [ -f "$PID_FILE" ]; then
         notify "✅ Copied: $TRANSCRIPT"
 
         echo "[$(date)] Attempting auto-paste..." >> "$LOG_FILE"
-        osascript -e 'tell application "System Events" to keystroke "v" using command down' 2>>"$LOG_FILE"
+        # Detect frontmost app to decide paste modifier.
+        # Windows remote desktop apps receive Ctrl+V; native Mac apps receive Cmd+V.
+        FRONT_APP=$(osascript -e 'tell application "System Events" to name of first process whose frontmost is true' 2>/dev/null)
+        echo "[$(date)] Frontmost app: $FRONT_APP" >> "$LOG_FILE"
+        IS_REMOTE=false
+        for _rapp in ${WINDOWS_REMOTE_APPS:-AnyDesk "Microsoft Remote Desktop" TeamViewer}; do
+            if [[ "$FRONT_APP" == *"$_rapp"* ]]; then
+                IS_REMOTE=true
+                echo "[$(date)] Windows remote detected ($FRONT_APP) — using Ctrl+V via key code" >> "$LOG_FILE"
+                break
+            fi
+        done
+        if $IS_REMOTE; then
+            # AnyDesk strips modifier keys from all synthetic AppleScript keystrokes,
+            # so Ctrl+V always arrives as plain V on Windows. Instead, type the text
+            # directly — AnyDesk forwards individual character keystrokes reliably.
+            echo "[$(date)] Windows remote: typing transcript directly into $FRONT_APP" >> "$LOG_FILE"
+            _AS_TEXT=$(printf '%s' "$TRANSCRIPT" | sed 's/\\/\\\\/g; s/"/\\"/g')
+            osascript -e "tell application \"System Events\" to tell process \"$FRONT_APP\" to keystroke \"$_AS_TEXT\"" 2>>"$LOG_FILE"
+        else
+            osascript -e 'tell application "System Events" to keystroke "v" using command down' 2>>"$LOG_FILE"
+        fi
     else
         echo "[$(date)] ERROR: No transcript generated. Audio might be empty." >> "$LOG_FILE"
         notify "❌ No speech detected"

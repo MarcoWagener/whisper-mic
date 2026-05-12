@@ -53,11 +53,19 @@ if [ -f "$PID_FILE" ]; then
     sleep 0.8
 
     echo "[$(date)] Running Whisper on $AUDIO_FILE..." >> "$LOG_FILE"
-    RAW_OUTPUT=$("$BINARY" -m "$MODEL" -f "$AUDIO_FILE" -l en -nt -np 2>>"$LOG_FILE")
+    RAW_OUTPUT=$("$BINARY" -m "$MODEL" -f "$AUDIO_FILE" -l en -nt -np -sns 2>>"$LOG_FILE")
 
     echo "[$(date)] RAW WHISPER OUTPUT: $RAW_OUTPUT" >> "$LOG_FILE"
 
     TRANSCRIPT=$(echo "$RAW_OUTPUT" | tr '\n' ' ' | sed 's/  */ /g' | sed 's/^ *//;s/ *$//')
+
+    # Drop transcripts that contain only whisper non-speech annotations (*...*, [...])
+    # These are silent-audio hallucinations — common with AirPods Max BT mic before codec is warm
+    CHECK=$(echo "$TRANSCRIPT" | sed 's/\*[^*]*\*//g; s/\[[^]]*\]//g; s/  */ /g; s/^ *//;s/ *$//')
+    if [ -z "$CHECK" ] && [ -n "$TRANSCRIPT" ]; then
+        echo "[$(date)] DROPPED non-speech-only output: $TRANSCRIPT" >> "$LOG_FILE"
+        TRANSCRIPT=""
+    fi
 
     # --- OPTIONAL: CLAUDE API POLISH ---
     # Only runs if CLAUDE_API_KEY is set in config; falls back silently on any failure
@@ -157,7 +165,10 @@ else
     echo $PID > "$PID_FILE"
     echo "[$(date)] FFMPEG PID: $PID saved to $PID_FILE" >> "$LOG_FILE"
 
-    sleep 0.5
+    # AirPods Max BT mic needs ~2.5s for AAC→HFP codec switch before audio actually captures.
+    # Without this, the first 1-3s of speech land in the silence gap and whisper hallucinates
+    # subtitle-style annotations like *demonic music* / *ding*.
+    sleep 2.5
     afplay /System/Library/Sounds/Ping.aiff &
     notify "✅ Live! Speak now..."
 fi

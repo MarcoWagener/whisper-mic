@@ -75,7 +75,7 @@ Then install everything else in one go:
 
 ```bash
 # Install the audio recorder, AI build tools, and notification helper
-brew install cmake ffmpeg sdl2 ninja terminal-notifier
+brew install cmake ffmpeg sdl2 ninja terminal-notifier jq ollama
 ```
 
 > **Intel Mac?** Everything works the same — just note that some paths differ (covered in Part 4).
@@ -100,15 +100,24 @@ ls ~/whisper.cpp/build/bin/
 
 You should see `whisper-cli` (or `main`) listed.
 
-### Step 3: Download the AI model
+### Step 3: Download the AI models
 
-This downloads the speech recognition model (~600MB). It's the brain that converts your voice to text.
+**Whisper model** (~600MB) — converts your voice to text:
 
 ```bash
 cd ~/whisper.cpp
 curl -L -o models/ggml-large-v3-turbo-q5_0.bin \
   https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin
 ```
+
+**Gemma 4 model** (~9.6GB) — polishes the transcript locally (fixes grammar, removes filler words):
+
+```bash
+brew services start ollama
+ollama pull gemma4
+```
+
+> This runs in the background and takes 10–20 minutes depending on your connection. You can continue with the rest of setup while it downloads.
 
 ### Step 4: Quick sanity check (optional but recommended)
 
@@ -202,7 +211,6 @@ The defaults work for most Apple Silicon Macs. If you installed things in non-st
 | `FFMPEG_BIN` | Your `ffmpeg` binary | `/opt/homebrew/bin/ffmpeg` |
 | `WHISPER_MODEL` | The model file inside `models/` | `ggml-large-v3-turbo-q5_0.bin` |
 | `MAX_RECORD_MINS` | Auto-stop recording after this many minutes | `10` |
-| `CLAUDE_API_KEY` | Claude API key for AI grammar/spelling polish (optional) | *(unset — disabled)* |
 
 > **Safety:** `MAX_RECORD_MINS` is a hard cap passed directly to `ffmpeg` — if you forget to stop recording, it will automatically stop after this many minutes, preventing runaway disk writes. Press the hotkey once more after it stops to trigger transcription as normal.
 
@@ -234,7 +242,7 @@ Each hotkey press toggles a state machine:
 4. **Transcribe:** The full recording is passed to `whisper-cli` in one shot — no streaming, no hallucinations
 5. **Paste:** The transcript is copied to your clipboard and a virtual `Cmd+V` pastes it into the active app
 6. **Music resume:** If Spotify was playing when you started recording, it automatically resumes once transcription is complete
-7. **Polish (optional):** If `CLAUDE_API_KEY` is set in your config, the transcript is sent to Claude Haiku to fix grammar, spelling, and remove filler words before pasting
+7. **Polish:** The transcript is sent to a local Gemma 4 model (via ollama) to fix grammar, spelling, and remove filler words before pasting. Runs entirely on-device — no internet required. Skipped silently if ollama is not running or Gemma 4 is not downloaded.
 
 ---
 

@@ -29,8 +29,7 @@ MAX_RECORD_MINS=10
 # Default covers the most common apps; override here if you use something else.
 # WINDOWS_REMOTE_APPS="AnyDesk Microsoft Remote Desktop TeamViewer"
 
-# (Optional) Claude API key for AI post-processing.
-# When set, transcripts are automatically cleaned up: grammar fixed, spelling corrected,
-# filler words removed, and text made more concise — before pasting into the active app.
-# Get a key at: https://console.anthropic.com/
-# CLAUDE_API_KEY="sk-ant-..."
+# AI transcript polish runs automatically via a local Gemma 4 model (ollama).
+# No API key required — processing is entirely on-device.
+# Requires: brew install ollama && brew services start ollama && ollama pull gemma4
+# Polish is silently skipped if ollama is not running or gemma4 is not downloaded.

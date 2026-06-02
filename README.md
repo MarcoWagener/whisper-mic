@@ -244,6 +244,12 @@ Each hotkey press toggles a state machine:
 6. **Music resume:** If Spotify was playing when you started recording, it automatically resumes once transcription is complete
 7. **Polish:** The transcript is sent to a local Gemma 3 model (via ollama) to fix grammar, spelling, and remove filler words before pasting. Runs entirely on-device — no internet required. Skipped silently if ollama is not running or Gemma 3 is not downloaded.
 
+### Polish model & settings
+
+The polish step uses **`gemma3:4b`** with **`num_ctx: 4096`** (set in the `ollama` API call in `whisper-mic.sh`). To change the model, update both the `ollama list | grep` guard and the JSON payload's `model` field in that script.
+
+`gemma3:4b` (4B params, ~3.3 GB) was chosen over the larger `gemma4` (8B, ~9.6 GB): cleanup accuracy is effectively identical for transcript polishing, but the smaller model loads in ~3 s cold (vs up to ~17 s) and uses ~1/3 the RAM. Warm calls are ~0.9 s either way. The reduced `num_ctx` (vs Gemma 3's 128k default) further cuts cold-load time — transcripts are short, so a 4k window is ample.
+
 ---
 
 ## Troubleshooting

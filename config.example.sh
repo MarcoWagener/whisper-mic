@@ -29,7 +29,7 @@ MAX_RECORD_MINS=10
 # Default covers the most common apps; override here if you use something else.
 # WINDOWS_REMOTE_APPS="AnyDesk Microsoft Remote Desktop TeamViewer"
 
-# AI transcript polish runs automatically via a local Gemma 4 model (ollama).
+# AI transcript polish runs automatically via a local Gemma 3 model (ollama).
 # No API key required — processing is entirely on-device.
-# Requires: brew install ollama && brew services start ollama && ollama pull gemma4
-# Polish is silently skipped if ollama is not running or gemma4 is not downloaded.
+# Requires: brew install ollama && brew services start ollama && ollama pull gemma3:4b
+# Polish is silently skipped if ollama is not running or gemma3:4b is not downloaded.

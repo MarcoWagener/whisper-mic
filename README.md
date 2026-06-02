@@ -110,14 +110,14 @@ curl -L -o models/ggml-large-v3-turbo-q5_0.bin \
   https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin
 ```
 
-**Gemma 4 model** (~9.6GB) — polishes the transcript locally (fixes grammar, removes filler words):
+**Gemma 3 model** (~3.3GB) — polishes the transcript locally (fixes grammar, removes filler words):
 
 ```bash
 brew services start ollama
-ollama pull gemma4
+ollama pull gemma3:4b
 ```
 
-> This runs in the background and takes 10–20 minutes depending on your connection. You can continue with the rest of setup while it downloads.
+> This runs in the background and takes a few minutes depending on your connection. You can continue with the rest of setup while it downloads.
 
 ### Step 4: Quick sanity check (optional but recommended)
 
@@ -242,7 +242,7 @@ Each hotkey press toggles a state machine:
 4. **Transcribe:** The full recording is passed to `whisper-cli` in one shot — no streaming, no hallucinations
 5. **Paste:** The transcript is copied to your clipboard and a virtual `Cmd+V` pastes it into the active app
 6. **Music resume:** If Spotify was playing when you started recording, it automatically resumes once transcription is complete
-7. **Polish:** The transcript is sent to a local Gemma 4 model (via ollama) to fix grammar, spelling, and remove filler words before pasting. Runs entirely on-device — no internet required. Skipped silently if ollama is not running or Gemma 4 is not downloaded.
+7. **Polish:** The transcript is sent to a local Gemma 3 model (via ollama) to fix grammar, spelling, and remove filler words before pasting. Runs entirely on-device — no internet required. Skipped silently if ollama is not running or Gemma 3 is not downloaded.
 
 ---
 

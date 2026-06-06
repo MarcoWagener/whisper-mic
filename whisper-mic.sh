@@ -16,7 +16,7 @@ echo "[$(date)] SCRIPT TRIGGERED (Raycast)" >> "$LOG_FILE"
 
 # Send a native macOS notification via terminal-notifier (follows system dark/light mode, shows Voice Memos mic icon)
 NOTIFIER="/opt/homebrew/bin/terminal-notifier"
-notify() { "$NOTIFIER" -title "Whisper Mic" -message "$1" -sender com.apple.VoiceMemos -ignoreDnD 2>>"$LOG_FILE"; }
+notify() { "$NOTIFIER" -title "Whisper Mic" -message "$1" -ignoreDnD 2>>"$LOG_FILE"; }
 
 # --- CONFIGURATION ---
 # Load user config from ~/.whisper-mic.conf (copy config.example.sh to get started)
@@ -34,7 +34,6 @@ if [ ! -f "$BINARY" ]; then BINARY="$WHISPER_DIR/build/bin/main"; fi
 MODEL="$WHISPER_DIR/models/$WHISPER_MODEL"
 AUDIO_FILE="/tmp/whisper_audio_sa.wav"
 PID_FILE="/tmp/whisper_rec.pid"
-SPOTIFY_STATE_FILE="/tmp/whisper_spotify_was_playing"
 
 echo "[$(date)] BINARY PATH: $BINARY" >> "$LOG_FILE"
 echo "[$(date)] FFMPEG PATH: $FFMPEG_BIN" >> "$LOG_FILE"
@@ -128,12 +127,6 @@ if [ -f "$PID_FILE" ]; then
         notify "❌ No speech detected"
     fi
 
-    # Resume Spotify if it was playing when we started recording
-    if [ -f "$SPOTIFY_STATE_FILE" ]; then
-        rm -f "$SPOTIFY_STATE_FILE"
-        osascript -e 'tell application "Spotify" to play' 2>>"$LOG_FILE"
-        echo "[$(date)] Spotify resumed." >> "$LOG_FILE"
-    fi
 else
     # --- STEP 1: STARTING ---
     echo "[$(date)] STATE: Starting Recording" >> "$LOG_FILE"
@@ -143,14 +136,6 @@ else
         echo "[$(date)] ERROR: FFMPEG not found at $FFMPEG_BIN" >> "$LOG_FILE"
         notify "❌ ERROR: FFMPEG not found"
         exit 1
-    fi
-
-    # Pause Spotify if it's currently playing, and remember to resume it later
-    SPOTIFY_PLAYING=$(osascript -e 'if application "Spotify" is running then tell application "Spotify" to get player state' 2>/dev/null)
-    if [ "$SPOTIFY_PLAYING" = "playing" ]; then
-        osascript -e 'tell application "Spotify" to pause' 2>>"$LOG_FILE"
-        touch "$SPOTIFY_STATE_FILE"
-        echo "[$(date)] Spotify paused." >> "$LOG_FILE"
     fi
 
     notify "🎤 Initializing mic..."
